@@ -4,7 +4,7 @@
 \alias{dataShapleyI5}
 \title{Data Shapley with different truncation rule}
 \usage{
-dataShapleyI5(D, A, V, tol = 0.01, convTol = tol * 5)
+dataShapleyI5(D, A, V, T, tol = 0.01, convTol = tol * 5)
 }
 \arguments{
 \item{D}{dataset of N points}
@@ -12,6 +12,8 @@ dataShapleyI5(D, A, V, tol = 0.01, convTol = tol * 5)
 \item{A}{learning algorithm}
 
 \item{V}{performance score}
+
+\item{T}{test dataset}
 
 \item{tol}{trancation tolerance}
 

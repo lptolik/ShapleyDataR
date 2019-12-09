@@ -4,7 +4,7 @@
 \alias{dataShapley}
 \title{Truncated Monte Carlo Shapley}
 \usage{
-dataShapley(D, A, V, tol = 0.05, convTol = tol)
+dataShapley(D, A, V, T, tol = 0.05, convTol = tol)
 }
 \arguments{
 \item{D}{dataset of N points}
@@ -12,6 +12,8 @@ dataShapley(D, A, V, tol = 0.05, convTol = tol)
 \item{A}{learning algorithm}
 
 \item{V}{performance score}
+
+\item{T}{test dataset}
 
 \item{tol}{trancation tolerance}
 

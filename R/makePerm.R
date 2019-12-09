@@ -27,3 +27,12 @@ makePerm<-function(N){
  return(sample.int(N))
 }
 
+tolMeanScore<-function(model,V,T){
+  res<-c()
+  N<-dim(T)[1]
+  for(i in 1:100){
+    perm<-sample.int(N,size = N,replace = TRUE)
+    res[i]<-V(model,T[perm,])
+  }
+  return(list(bin=min(res),mean=mean(res),std=sd(res),median=median(res),iqr=IQR(res),max=max(res)))
+}

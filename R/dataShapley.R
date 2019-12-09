@@ -13,7 +13,8 @@
 dataShapley<-function(D,A,V,T,tol=0.05,convTol=tol){
   N<-dim(D)[1]
   phi<-list()
-  vTot<-V(D,A,T)
+  model<-A(D)
+  vTot<-V(model,T)
   perfTolerance<-tol*vTot
   t<-1
   phi[[t]]<-rep(0.0,N)
@@ -26,14 +27,16 @@ dataShapley<-function(D,A,V,T,tol=0.05,convTol=tol){
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n')
     }
     perm<-makePerm(N)
-    vNull<-V(D[FALSE,],A,T)
+    model<-A(D[FALSE,])
+    vNull<-V(model,T)
     v<-c()
     v[1]<-vNull
     for (j in (1:N)){
       if(abs(vTot-v[j])< perfTolerance){
         v[j+1]<-v[j]
       }else{
-        v[j+1]<-V(D[perm[1:j],],A,T)
+        model<-A(D[perm[1:j],])
+        v[j+1]<-V(model,T)
       }
     }
     phi[[t]]<-rep(0.0,N)
@@ -57,9 +60,11 @@ dataShapley<-function(D,A,V,T,tol=0.05,convTol=tol){
 dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
   N<-dim(D)[1]
   phi<-list()
-  vTot<-V(D,A,T)
+  model<-A(D)
+  tolMS<-tolMeanScore(model,V,T)
+  vTot<-tolMS$mean #V(D,model,T)
   v<-rep(0.0,N)
-  vNull<-V(D[FALSE,],A,T)
+  vNull<-V(NULL,T)
   perfTolerance<-tol*vTot
   t<-1
   phi[[t]]<-rep(0.0,N)
@@ -70,16 +75,18 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
     }else if(t%%1000==0){
       tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n')
-      save(phi,t,N,vTot,v,perm,perfTolerance,vNull,file = 'tmpShapley.RData')
+      save(phi,t,N,vTot,v,perm,perfTolerance,vNull,tolMS,file = 'tmpShapley.RData')
     }
     perm<-makePerm(N)
-    vNull<-V(D[FALSE,],A,T)
+    #model<-A(D[FALSE,])
+    vNull<-V(NULL,T)
     v<-rep(0.0,N)
     newRes<-vNull
     belowIdx<-0
     for (j in (1:N)){
       oldRes<-newRes
-      newRes<-V(D[perm[1:j],],A,T)
+      model<-A(D[perm[1:j],])
+      newRes<-V(model,T)
       if(abs(vTot-newRes)< perfTolerance){
         belowIdx<-belowIdx+1
       }else{

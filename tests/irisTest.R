@@ -28,17 +28,17 @@ alg<-function(data){
 return(model_lambda)
 }
 
-validF<-function(data,model,test){
-  if(is.null(mode)){
-    return(max(table(testData[,5])/dim(testData)[1])) #(runif(1))
+validF<-function(model,test){
+  if(is.null(model)){
+    return(max(table(test[,5])/dim(test)[1])) #(runif(1))
   }
   model_lambda<-model
   best_s  <- model_lambda$lambda.1se
-  x_test<-testData[,1:4]
-  y_test<-as.numeric(testData[,5])
+  x_test<-test[,1:4]
+  y_test<-as.numeric(test[,5])
   pred <- as.numeric(predict(model_lambda, newx=as.matrix(x_test), type="class" , s=best_s))
   res=sum(y_test==pred)/NROW(pred)
   return(res)
 }
 
-res<-dataShapley(data,alg,validF)
+res<-dataShapley(data,alg,validF,testData)
