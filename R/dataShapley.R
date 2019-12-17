@@ -13,10 +13,12 @@
 dataShapley<-function(D,A,V,T,tol=0.05,convTol=tol){
   N<-dim(D)[1]
   phi<-list()
+  val<-list()
+  permL<-list()
   model<-A(D)
   vTot<-V(model,T)
   perfTolerance<-tol*vTot
-  t<-1
+  t<-0
   phi[[t]]<-rep(0.0,N)
   while(!convCriteria(phi,convTol)){
     t<-t+1
@@ -41,8 +43,10 @@ dataShapley<-function(D,A,V,T,tol=0.05,convTol=tol){
     }
     phi[[t]]<-rep(0.0,N)
     phi[[t]][perm]<-phi[[t-1]][perm]*(t-1)/t+(v[2:N+1]-v[1:N])/t
+    val[[t]]<-v
+    permL[[t]]<-perm
   }
-  return(phi)
+  return(list(phi=phi,val=val,perm=permL))
 }
 
 #' Data Shapley with different truncation rule
@@ -60,6 +64,8 @@ dataShapley<-function(D,A,V,T,tol=0.05,convTol=tol){
 dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
   N<-dim(D)[1]
   phi<-list()
+  val<-list()
+  permL<-list()
   model<-A(D)
   tolMS<-tolMeanScore(model,V,T)
   vTot<-tolMS$mean #V(D,model,T)
@@ -68,6 +74,7 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
   perfTolerance<-tol*vTot
   t<-1
   phi[[t]]<-rep(0.0,N)
+  val[[t]]<-rep(0.0,N)
   while(!convCriteria(phi,convTol)){
     t<-t+1
     if(t<=101){
@@ -103,13 +110,14 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
       v[j]<-newRes-oldRes
     }
     val[[t]]<-rep(0.0,N)
-    val[[t]][perm]<-v
+    val[[t]]<-v
+    permL[[t]]<-perm
     phi[[t]]<-rep(0.0,N)
     phi[[t]][perm]<-phi[[t-1]][perm]*(t-1)/t+v/t
   }
   tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
   cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n')
-  save(phi,t,N,vTot,v,val,perm,perfTolerance,vNull,tolMS,file = 'tmpShapley.RData')
-  return(phi)
+  save(phi,t,N,vTot,v,val,permL,perfTolerance,vNull,tolMS,file = 'tmpShapley.RData')
+  return(list(phi=phi,val=val,perm=permL))
 }
 
