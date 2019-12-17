@@ -72,10 +72,10 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
     t<-t+1
     if(t<=101){
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'\n')
-    }else if(t%%1000==0){
+    }else if(t%%100==0){
       tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n')
-      save(phi,t,N,vTot,v,perm,perfTolerance,vNull,tolMS,file = 'tmpShapley.RData')
+      save(phi,t,N,vTot,v,val,perm,perfTolerance,vNull,tolMS,file = 'tmpShapley.RData')
     }
     perm<-makePerm(N)
     #model<-A(D[FALSE,])
@@ -89,21 +89,27 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
       newRes<-V(model,T)
       if(abs(vTot-newRes)< perfTolerance){
         belowIdx<-belowIdx+1
+        #cat(format(Sys.time(), "%b %d %X"),t,"Instance:",j,'',belowIdx,"\n")
       }else{
         belowIdx<-0
       }
       if(belowIdx>5){
-        v[j+1:N]<-0
-        if(t%%100==0){
+        v[j:N]<-0
+        #if(t%%100==0){
         cat(format(Sys.time(), "%b %d %X"),t,"Tolerance break:",j,"\n")
-        }
+        #}
         break()
       }
       v[j]<-newRes-oldRes
     }
+    val[[t]]<-rep(0.0,N)
+    val[[t]][perm]<-v
     phi[[t]]<-rep(0.0,N)
     phi[[t]][perm]<-phi[[t-1]][perm]*(t-1)/t+v/t
   }
+  tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
+  cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n')
+  save(phi,t,N,vTot,v,val,perm,perfTolerance,vNull,tolMS,file = 'tmpShapley.RData')
   return(phi)
 }
 
