@@ -14,7 +14,9 @@ modMedGr <- changeBounds(modU, ex[c('o2IN','glcIN','piIN','slfIN','pimIN','thmIN
 
 modPeng<-changeObjFunc(modMedP,c('pengOUT'),c(1))
 cat(format(Sys.time(), "%b %d %X"),'Start\n',append = TRUE,file = logFile)
-N<-modPeng@react_num
+idxRe<-which(uppbnd(modPeng)-lowbnd(modPeng)&!grepl('^(pengOUT|bmOUT)$',modPeng@react_id))
+N<-length(idxRe)#modPeng@react_num
+reId<-modPeng@react_id[idxRe]
 convTol<-0.1
 tol<-0.01
 phi<-list()
@@ -37,8 +39,8 @@ while(!convCriteria(phi,convTol)){
   }else{
     tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
     cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n',append = TRUE,file = logFile)
-  if(t%%10==0){
-    save(phi,t,N,vTot,v,val,permL,sd,perfTolerance,vNull,tolV,modPeng,file = 'fbaShapleyPeng.RData')
+  if(t%%500==0){
+    save(phi,t,N,vTot,v,val,permL,sd,perfTolerance,vNull,tolV,modPeng,reId,idxRe,file = 'fbaShapleyPeng.RData')
   }
   }
   perm<-makePerm(N)
@@ -48,7 +50,7 @@ while(!convCriteria(phi,convTol)){
   for (j in (1:N)){
     oldRes<-newRes
     bound<-rep(0,j)
-    model<-optimizeProb(modPeng,algorithm = "fba",retOptSol = FALSE,react=perm[1:j],lb=bound,ub=bound)
+    model<-optimizeProb(modPeng,algorithm = "fba",retOptSol = FALSE,react=reId[perm[1:j]],lb=bound,ub=bound)
     newRes<-model$obj
     #cat(format(Sys.time(), "%b %d %X"),t,"Instance:",j,'; newRes=',newRes,"\n")
     if(abs(vNull-newRes)< perfTolerance){
