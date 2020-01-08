@@ -1,14 +1,14 @@
 Package: ShapleyDataR
 Type: Package
 Title: Calculates Shapley values for data in ML projects.
-Version: 0.0.2
+Version: 0.0.3
 Author: Anatoly Sorokin <lptolik@gmail.com>
 Maintainer: The package maintainer <yourself@somewhere.net>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
 License: file LICENSE
 Depends: 
-Imports: RColorBrewer, plyr, reshape2
+Imports: RColorBrewer, plyr, reshape2, sybil
 Suggests: testthat, knitr, ggplot2
 Encoding: UTF-8
 LazyData: true
