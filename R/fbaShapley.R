@@ -7,7 +7,9 @@
 #'   \item{sd}{Standard deviation for the Shapley values}
 #'   \item{p}{Probability that the \code{shapley} contains real Shapley values.}
 #' }
-#' for reactions, their standard deviations,
+#'
+#'
+#'
 #' @param mod FBA model in Sybil format.
 #' @param reId list of reaction Ids to be used in calculations.
 #' @param tol tolerance for Shapley value convergence
