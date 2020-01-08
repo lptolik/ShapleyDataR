@@ -3,6 +3,9 @@
 ^data/.*
 .*\.Rdata
 .*\.rds
+.*\.pdf
+.*\.tsv
+.*\.tex
 .*\.log
 ^.*\.Rmd
 ^.*_cache/.*
