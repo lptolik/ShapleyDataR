@@ -1,5 +1,9 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^data/.*
-.*.Rdata
-.*.rds
+.*\.Rdata
+.*\.rds
+.*\.log
+^.*\.Rmd
+^.*_cache/.*
+^.*_files/.*
