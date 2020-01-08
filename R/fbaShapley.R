@@ -24,7 +24,7 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
   N<-length(reId)
   tmpFile<-paste0('fbaShapley.',format(Sys.time(), "%Y%m%d%H%M"),'.RData')
   phi<-list()
-  sd<-list()
+  m2<-list()
   val<-list()
   permL<-list()
   jStop<-c()
@@ -35,7 +35,7 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
   t<-1
   phi[[1]]<-rep(0.0,N)
   val[[1]]<-rep(0.0,N)
-  sd[[1]]<-rep(0.0,N)
+  m2[[1]]<-rep(0.0,N)
   while(!convCriteria(phi,convTol)){
     t<-t+1
     if(t<=100){
@@ -44,7 +44,7 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
       tolV<-sum(abs(phi[[t-1]]-phi[[t-100]])/(1e-5+abs(phi[[t-1]])))
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n',append = TRUE,file = logName)
       if(t%%tmpSave==0){
-        save(phi,t,N,vTot,v,val,permL,sd,perfTolerance,vNull,tolV,mod,reId,jStop,file = tmpFile)
+        save(phi,t,N,vTot,v,val,permL,m2,perfTolerance,vNull,tolV,mod,reId,jStop,file = tmpFile)
       }
     }
     perm<-makePerm(N)
@@ -73,15 +73,15 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
     permL[[t]]<-perm
     phi[[t]]<-rep(0.0,N)
     phi[[t]][perm]<-phi[[t-1]][perm]+(v-phi[[t-1]][perm])/t
-    sd[[t]]<-rep(0.0,N)
-    sd[[t]][perm]<-sd[[t]][perm]+(v-phi[[t-1]][perm])*(v-phi[[t]][perm])
+    m2[[t]]<-rep(0.0,N)
+    m2[[t]][perm]<-m2[[t]][perm]+(v-phi[[t-1]][perm])*(v-phi[[t]][perm]) # don't forget to divide by T at the end
   }
-  save(phi,t,N,vTot,v,val,permL,sd,perfTolerance,vNull,tolV,mod,reId,jStop,file = tmpFile)
+  save(phi,t,N,vTot,v,val,permL,m2,perfTolerance,vNull,tolV,mod,reId,jStop,file = tmpFile)
 # TODO: calculate probability for the SHapley data
   shpl<--1*phi[[t]]
   res<-list(reId=reId,
             shapley=shpl,
-            sd=sd[[t]],
+            sd=m2[[t]]/(t-1),
             p=NA)
   class(res)<-'shapley'
   return(res)
