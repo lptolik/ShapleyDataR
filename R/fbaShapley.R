@@ -22,7 +22,7 @@
 fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perfTolerance=1e-5){
   convTol<-0.1
   N<-length(reId)
-  tmpFile<-paste0('fbaShapley.',format(Sys.time(), "%Y%m%d%H%M"),'.RData')
+  tmpFile<-paste0(sub('.log','',logName),format(Sys.time(), "%Y%m%d%H%M"),'.RData')
   phi<-list()
   m2<-list()
   val<-list()
