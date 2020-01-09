@@ -47,8 +47,8 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
     }else{
       tolV<-sum(abs(phi[[t-1]]-phi[[t-100]])/(1e-5+abs(phi[[t-1]])))
       if(t%%tmpSave==0){
-        sd<-m2[[t]]/(t-1)
-        e<-sapply(Z,function(.x)sqrt((.x^2*sd)/t))
+        sd<-m2[[t-1]]/(t-2)
+        e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t-1)))
         save(phi,t,N,vTot,v,val,permL,m2,sd,e,Z,alph,perfTolerance,vNull,tolV,mod,reId,jStop,file = tmpFile)
         cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,' err (1%,5%,10%)=',apply(e,2,max),'\n',append = TRUE,file = logName)
       }else{
