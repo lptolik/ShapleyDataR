@@ -21,6 +21,7 @@
 #' @export
 #'
 #' @importFrom sybil optimizeProb
+#' @import hash
 fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perfTolerance=1e-5){
   convTol<-0.1
   alph<-c(0.01,0.05,0.1)
@@ -50,7 +51,7 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
       if(t%%tmpSave==0){
         sd<-m2[[t-1]]/(t-2)
         e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t-1)))
-        save(phi,t,N,vTot,v,val,permL,m2,sd,e,Z,alph,perfTolerance,vNull,tolV,mod,reId,jStop,file = tmpFile)
+        save(phi,t,N,vTot,v,val,permL,m2,sd,e,Z,alph,perfTolerance,vNull,tolV,mod,reId,jStop,objHash,file = tmpFile)
         cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,' err (1%,5%,10%)=',apply(e,2,max),'\n',append = TRUE,file = logName)
       }else{
         cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n',append = TRUE,file = logName)
@@ -91,7 +92,7 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
     m2[[t]]<-rep(0.0,N)
     m2[[t]][perm]<-m2[[t]][perm]+(v-phi[[t-1]][perm])*(v-phi[[t]][perm]) # don't forget to divide by T at the end
   }
-  save(phi,t,N,vTot,v,val,permL,m2,sd,e,Z,alph,perfTolerance,vNull,tolV,mod,reId,jStop,file = tmpFile)
+  save(phi,t,N,vTot,v,val,permL,m2,sd,e,Z,alph,perfTolerance,vNull,tolV,mod,reId,jStop,objHash,file = tmpFile)
 # TODO: calculate probability for the SHapley data
   shpl<--1*phi[[t]]
   res<-list(reId=reId,
@@ -99,6 +100,8 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
             sd=m2[[t]]/(t-1),
             p=NA)
   class(res)<-'shapley'
+  clear(objHash)
+  rm(objHash)
   return(res)
 }
 
