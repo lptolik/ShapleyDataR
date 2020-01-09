@@ -16,13 +16,14 @@
 #' @param logName name of the file to append log records to
 #' @param tmpSave frequency of tmp results saving
 #' @param perfTolerance tolerance for fail early check
+#' @param cacheDepth how many first knockout have to be cached
 #'
 #' @return object of class \code{shapley}
 #' @export
 #'
 #' @importFrom sybil optimizeProb
 #' @import hash
-fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perfTolerance=1e-5){
+fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perfTolerance=1e-5,cacheDepth=3){
   convTol<-0.1
   alph<-c(0.01,0.05,0.1)
   Z<-qnorm(alph,lower.tail = FALSE)
@@ -42,6 +43,7 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
   val[[1]]<-rep(0.0,N)
   m2[[1]]<-rep(0.0,N)
   objHash<-hash()
+  fmt<-paste0('%0',(log10(length(reId))+1),'d')
   while(!convCriteria(phi,convTol)){
     t<-t+1
     if(t<=100){
@@ -63,9 +65,9 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
     belowIdx<-0
     for (j in (1:N)){
       oldRes<-newRes
-      key<-paste(sprintf('%06d',sort(perm[1:j])))
-      if(j<6){
-      if(!has.key(key,objHash)){
+      if(j<=cacheDepth){
+        key<-paste(sprintf(fmt,sort(perm[1:j])))
+        if(!has.key(key,objHash)){
       objHash[[key]]<-calcObj(mod,reId[perm[1:j]])
       }
       newRes<-objHash[[key]]
