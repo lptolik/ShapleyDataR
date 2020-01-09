@@ -43,7 +43,7 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
   val[[1]]<-rep(0.0,N)
   m2[[1]]<-rep(0.0,N)
   objHash<-hash()
-  fmt<-paste0('%0',(log10(length(reId))+1),'d')
+  fmt<-paste0('%0',floor(log10(length(reId))+1),'d')
   while(!convCriteria(phi,convTol)){
     t<-t+1
     if(t<=100){
