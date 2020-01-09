@@ -61,9 +61,7 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
     belowIdx<-0
     for (j in (1:N)){
       oldRes<-newRes
-      bound<-rep(0,j)
-      model<-optimizeProb(mod,algorithm = "fba",retOptSol = FALSE,react=reId[perm[1:j]],lb=bound,ub=bound)
-      newRes<-model$obj
+        newRes<-calcObj(mod,reId[perm[1:j]])
       if(abs(vNull-newRes)< perfTolerance){
         belowIdx<-belowIdx+1
       }else{
@@ -93,4 +91,10 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
             p=NA)
   class(res)<-'shapley'
   return(res)
+}
+
+calcObj<-function(mod,react){
+  bound<-rep(0,length(react))
+  model<-optimizeProb(mod,algorithm = "fba",retOptSol = FALSE,react=react,lb=bound,ub=bound)
+  return(model$obj)
 }
