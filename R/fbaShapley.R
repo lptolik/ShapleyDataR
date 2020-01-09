@@ -40,6 +40,7 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
   phi[[1]]<-rep(0.0,N)
   val[[1]]<-rep(0.0,N)
   m2[[1]]<-rep(0.0,N)
+  objHash<-hash()
   while(!convCriteria(phi,convTol)){
     t<-t+1
     if(t<=100){
@@ -61,7 +62,15 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
     belowIdx<-0
     for (j in (1:N)){
       oldRes<-newRes
+      key<-paste(sprintf('%06d',sort(perm[1:j])))
+      if(j<6){
+      if(!has.key(key,objHash)){
+      objHash[[key]]<-calcObj(mod,reId[perm[1:j]])
+      }
+      newRes<-objHash[[key]]
+      else{
         newRes<-calcObj(mod,reId[perm[1:j]])
+      }
       if(abs(vNull-newRes)< perfTolerance){
         belowIdx<-belowIdx+1
       }else{
