@@ -68,7 +68,7 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
       objHash[[key]]<-calcObj(mod,reId[perm[1:j]])
       }
       newRes<-objHash[[key]]
-      else{
+      }else{
         newRes<-calcObj(mod,reId[perm[1:j]])
       }
       if(abs(vNull-newRes)< perfTolerance){
