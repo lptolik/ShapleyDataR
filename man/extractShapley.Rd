@@ -4,10 +4,12 @@
 \alias{extractShapley}
 \title{Extract Shapley data from temporary savings}
 \usage{
-extractShapley(fname)
+extractShapley(fname, tol = 1e-08)
 }
 \arguments{
 \item{fname}{temporary save file to extract data from}
+
+\item{tol}{the shapley close to zero will be set to zero explicitly}
 }
 \value{
 data.frame having the same column names as properties of shapley class.
