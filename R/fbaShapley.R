@@ -66,7 +66,7 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
     for (j in (1:N)){
       oldRes<-newRes
       if(j<=cacheDepth){
-        key<-paste(sprintf(fmt,sort(perm[1:j])))
+        key<-paste(sprintf(fmt,sort(perm[1:j])),collapse = '')
         if(!has.key(key,objHash)){
       objHash[[key]]<-calcObj(mod,reId[perm[1:j]])
       }
@@ -94,13 +94,18 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
     m2[[t]]<-rep(0.0,N)
     m2[[t]][perm]<-m2[[t]][perm]+(v-phi[[t-1]][perm])*(v-phi[[t]][perm]) # don't forget to divide by T at the end
   }
+  sd<-m2[[t]]/(t-1)
+  e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t)))
   save(phi,t,N,vTot,v,val,permL,m2,sd,e,Z,alph,perfTolerance,vNull,tolV,mod,reId,jStop,objHash,file = tmpFile)
-# TODO: calculate probability for the SHapley data
+  idx<-match(reId,mod@react_id)
   shpl<--1*phi[[t]]
   res<-list(reId=reId,
+            name=mod@react_name[idx],
             shapley=shpl,
             sd=m2[[t]]/(t-1),
-            p=NA)
+            err01=e[,1],
+            err05=e[,2],
+            err10=e[,3])
   class(res)<-'shapley'
   clear(objHash)
   rm(objHash)
