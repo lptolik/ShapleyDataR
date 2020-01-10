@@ -4,7 +4,7 @@
 \alias{extractShapley}
 \title{Extract Shapley data from temporary savings}
 \usage{
-extractShapley(fname, tol = 1e-08)
+extractShapley(fname, tol = 1e-15)
 }
 \arguments{
 \item{fname}{temporary save file to extract data from}
