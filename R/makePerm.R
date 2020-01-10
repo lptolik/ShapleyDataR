@@ -15,6 +15,7 @@ convCriteria<-function(phi,convTol=0.05){
  return(TRUE)
 }
 
+
 #' Make data point permutations.
 #'
 #' THe function is extracted to be able to apply group permutations later.
@@ -26,6 +27,9 @@ convCriteria<-function(phi,convTol=0.05){
 makePerm<-function(N){
  return(sample.int(N))
 }
+
+#' @importFrom stats IQR median sd
+NULL
 
 tolMeanScore<-function(model,V,T){
   res<-c()
