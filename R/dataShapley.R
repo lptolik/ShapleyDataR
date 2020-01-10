@@ -19,9 +19,9 @@ dataShapley<-function(D,A,V,T,tol=0.05,convTol=tol){
   model<-A(D)
   vTot<-V(model,T)
   perfTolerance<-tol*vTot
-  t<-0
-  phi[[t]]<-rep(0.0,N)
-  sd[[t]]<-rep(0.0,N)
+  t<-1
+  phi[[1]]<-rep(0.0,N)
+  sd[[1]]<-rep(0.0,N)
   while(!convCriteria(phi,convTol)){
     t<-t+1
     if(t<=101){
