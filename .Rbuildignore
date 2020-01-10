@@ -6,7 +6,9 @@
 .*\.pdf
 .*\.tsv
 .*\.tex
+.*\.txt
 .*\.log
 ^.*\.Rmd
 ^.*_cache/.*
 ^.*_files/.*
+^[^/]+\.R

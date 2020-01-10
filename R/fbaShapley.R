@@ -22,6 +22,7 @@
 #' @export
 #'
 #' @importFrom sybil optimizeProb
+#' @importFrom stats qnorm
 #' @import hash
 fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perfTolerance=1e-5,cacheDepth=3){
   convTol<-0.1
