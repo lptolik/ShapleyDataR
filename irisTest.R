@@ -1,6 +1,7 @@
 library(glmnet)
 library(datasets)
 library(ShapleyDataR)
+library(doParallel)
 data(iris)
 
 y <- as.numeric(iris[,5])
@@ -41,4 +42,4 @@ validF<-function(model,test){
   return(res)
 }
 
-res<-dataShapley(data,alg,validF,testData)
+res<-dataShapleyParallel(data,alg,validF,testData,numCores = 8)

@@ -4,7 +4,15 @@
 \alias{dataShapley}
 \title{Truncated Monte Carlo Shapley}
 \usage{
-dataShapley(D, A, V, T, tol = 0.05, convTol = tol)
+dataShapley(
+  D,
+  A,
+  V,
+  T,
+  tol = 0.05,
+  convTol = tol,
+  convCriteriaF = convCriteria
+)
 }
 \arguments{
 \item{D}{dataset of N points}

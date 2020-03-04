@@ -15,6 +15,37 @@ convCriteria<-function(phi,convTol=0.05){
  return(TRUE)
 }
 
+convCriteriaErr<-function(phi,convTol=0.05,gap=2){
+  if(length(phi)<=100){
+    return(FALSE)
+  }else{
+    r<-getPhi(phi)
+    m<-r$phi
+    sd<-r$sd
+    t<-r$N
+    mN<-m/sum(m)
+    idx<-which(abs(mN)>(1e-1/length(m)))
+    Z<-qnorm(convTol,lower.tail = FALSE)
+    e<-sqrt((Z^2*sd)/(t))
+    ide<-which(e==0)
+    e[ide] <- 1e-3/length(m)
+    cat(format(Sys.time(), "%b %d %X"),'convergence: n=',length(idx),', nonconv=',length(which(abs(m[idx]/e[idx])>gap)),'\n')
+    cat(format(Sys.time(), "%b %d %X"),'convergence: mN=[',summary(mN),'] \n')
+    cat(format(Sys.time(), "%b %d %X"),'convergence: ratio=[',summary(abs(m[idx]/e[idx])),']\n')
+    return(all(abs(m[idx]/e[idx])>gap))
+  }
+  return(TRUE)
+}
+
+
+getPhi<-function(val){
+  t<-length(val)
+  p<-do.call(rbind,val)
+  rS<-rowSums(p)
+  m<-apply(p, 2, mean)
+  sd<-apply(p,2,sd)
+  return(list(phi=m,sd=sd,N=t))
+}
 
 #' Make data point permutations.
 #'

@@ -4,7 +4,15 @@
 \alias{dataShapleyI5}
 \title{Data Shapley with different truncation rule}
 \usage{
-dataShapleyI5(D, A, V, T, tol = 0.01, convTol = tol * 5)
+dataShapleyI5(
+  D,
+  A,
+  V,
+  T,
+  tol = 0.01,
+  convTol = tol * 5,
+  convCriteriaF = convCriteria
+)
 }
 \arguments{
 \item{D}{dataset of N points}
