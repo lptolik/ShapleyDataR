@@ -88,12 +88,12 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
       v[j]<-newRes-oldRes
     }
     val[[t]]<-rep(0.0,N)
-    val[[t]]<-v
+    val[[t]][perm]<-v
     permL[[t]]<-perm
     phi[[t]]<-rep(0.0,N)
     phi[[t]][perm]<-phi[[t-1]][perm]+(v-phi[[t-1]][perm])/t
     m2[[t]]<-rep(0.0,N)
-    m2[[t]][perm]<-m2[[t]][perm]+(v-phi[[t-1]][perm])*(v-phi[[t]][perm]) # don't forget to divide by T at the end
+    m2[[t]][perm]<-m2[[t-1]][perm]+(v-phi[[t-1]][perm])*(v-phi[[t]][perm]) # don't forget to divide by T at the end
   }
   sd<-m2[[t]]/(t-1)
   e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t)))
@@ -103,7 +103,7 @@ fbaShapley<-function(mod,reId,tol=0.05,logName='fbaShapley.log',tmpSave=500,perf
   res<-list(reId=reId,
             name=mod@react_name[idx],
             shapley=shpl,
-            sd=m2[[t]]/(t-1),
+            sd=sd,
             err01=e[,1],
             err05=e[,2],
             err10=e[,3])
