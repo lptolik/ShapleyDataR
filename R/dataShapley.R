@@ -70,6 +70,9 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
   phi<-list()
   sd<-list()
   val<-list()
+  alph<-c(0.01,0.05,0.1)
+  Z<-qnorm(alph,lower.tail = FALSE)
+  m2 <- list()
   permL<-list()
   model<-A(D)
   tolMS<-tolMeanScore(model,V,T)
@@ -81,17 +84,19 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
   phi[[t]]<-rep(0.0,N)
   val[[t]]<-rep(0.0,N)
   sd[[t]]<-rep(0.0,N)
+  m2[[t]]<-rep(0.0,N)
   while(!convCriteria(phi,convTol)){
     t<-t+1
     if(t<=101){
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'\n')
     }else if(t%%100==0){
+      sd<-m2[[t-1]]/(t-2)
+      e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t-1)))
       tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n')
-      save(phi,t,N,vTot,v,val,perm,perfTolerance,vNull,tolMS,file = 'tmpShapley.RData')
+      save(phi,t,N,vTot,v,val,permL,sd,perfTolerance,vNull,tolMS,m2,e,file = 'tmpShapley.RData')
     }
     perm<-makePerm(N)
-    #model<-A(D[FALSE,])
     vNull<-V(NULL,T)
     v<-rep(0.0,N)
     newRes<-vNull
@@ -102,30 +107,35 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
       newRes<-V(model,T)
       if(abs(vTot-newRes)< perfTolerance){
         belowIdx<-belowIdx+1
-        #cat(format(Sys.time(), "%b %d %X"),t,"Instance:",j,'',belowIdx,"\n")
       }else{
         belowIdx<-0
       }
       if(belowIdx>5){
         v[j:N]<-0
-        #if(t%%100==0){
         cat(format(Sys.time(), "%b %d %X"),t,"Tolerance break:",j,"\n")
-        #}
         break()
       }
       v[j]<-newRes-oldRes
     }
     val[[t]]<-rep(0.0,N)
-    val[[t]]<-v
+    val[[t]][perm]<-v
     permL[[t]]<-perm
     phi[[t]]<-rep(0.0,N)
     phi[[t]][perm]<-phi[[t-1]][perm]+(v-phi[[t-1]][perm])/t
-    sd[[t]]<-rep(0.0,N)
-    sd[[t]][perm]<-sd[[t]][perm]+(v-phi[[t-1]][perm])*(v-phi[[t]][perm])
+    m2[[t]]<-rep(0.0,N)
+    m2[[t]][perm]<-m2[[t-1]][perm]+(v-phi[[t-1]][perm])*(v-phi[[t]][perm])
   }
+  sd<-m2[[t]]/(t-1)
+  e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t)))
   tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
   cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n')
-  save(phi,t,N,vTot,v,val,permL,perfTolerance,vNull,tolMS,file = 'tmpShapley.RData')
-  return(list(phi=phi,val=val,perm=permL))
+  save(phi,t,N,vTot,v,val,permL,perfTolerance,vNull,tolMS,m2,e,file = 'tmpShapley.RData')
+  return(list(phi=phi,
+              val=val,
+              perm=permL,
+              sd=sd,
+              err01=e[,1],
+              err05=e[,2],
+              err10=e[,3]))
 }
 
