@@ -78,7 +78,7 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
   tolMS<-tolMeanScore(model,V,T)
   vTot<-tolMS$mean #V(D,model,T)
   v<-rep(0.0,N)
-  vNull<-V(NULL,T)
+  vNull<-V(NULL, T)
   perfTolerance<-tol*vTot
   t<-1
   phi[[t]]<-rep(0.0,N)
@@ -97,14 +97,18 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
       save(phi,t,N,vTot,v,val,permL,sd,perfTolerance,vNull,tolMS,m2,e,file = 'tmpShapley.RData')
     }
     perm<-makePerm(N)
-    vNull<-V(NULL,T)
     v<-rep(0.0,N)
     newRes<-vNull
     belowIdx<-0
     for (j in (1:N)){
       oldRes<-newRes
       model<-A(D[perm[1:j],])
-      newRes<-V(model,T)
+      if (is.null(model)) {
+        newRes <- vNull
+        cat(format(Sys.time(), "%b %d %X"), "Model is null, j =", j, "\n")
+      } else {
+        newRes<-V(model,T)
+      }
       if(abs(vTot-newRes)< perfTolerance){
         belowIdx<-belowIdx+1
       }else{
