@@ -61,11 +61,14 @@ dataShapley<-function(D,A,V,T,tol=0.05,convTol=tol){
 #' @param T test dataset
 #' @param tol trancation tolerance
 #' @param convTol convergence tolerance
+#' @param log.file name of file to be used in `cat` calls
+#' @param log.append logical parameter indicating if `cat` should append its output to log-file
+#' @param rdata.name name of RData file should be used to save intermediate calculation results
 #'
 #' @return Shapley value of training points
 #' @export
 #'
-dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=F){
+dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=F, rdata.name="tmpShapley"){
   N<-dim(D)[1]
   phi<-list()
   sd<-list()
@@ -94,7 +97,7 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
       e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t-1)))
       tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n', file = log.file, append = log.append)
-      save(phi,t,N,vTot,v,val,permL,sd,perfTolerance,vNull,tolMS,m2,e,file = 'tmpShapley.RData')
+      save(phi,t,N,vTot,v,val,permL,sd,perfTolerance,vNull,tolMS,m2,e,file = paste0(rdata.name, '.RData'))
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'Save is completed','\n', file = log.file, append = log.append)
     }
     perm<-makePerm(N)
@@ -134,7 +137,7 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
   e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t)))
   tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
   cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n', file = log.file, append = log.append)
-  save(phi,t,N,vTot,v,val,permL,perfTolerance,vNull,tolMS,m2,e,file = 'tmpShapley.RData')
+  save(phi,t,N,vTot,v,val,permL,perfTolerance,vNull,tolMS,m2,e,file = paste0(rdata.name, '.RData'))
   return(list(phi=phi,
               val=val,
               perm=permL,
