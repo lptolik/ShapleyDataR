@@ -65,7 +65,7 @@ dataShapley<-function(D,A,V,T,tol=0.05,convTol=tol){
 #' @return Shapley value of training points
 #' @export
 #'
-dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
+dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=F){
   N<-dim(D)[1]
   phi<-list()
   sd<-list()
@@ -88,13 +88,14 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
   while(!convCriteria(phi,convTol)){
     t<-t+1
     if(t<=101){
-      cat(format(Sys.time(), "%b %d %X"),'t=',t,'\n')
+      cat(format(Sys.time(), "%b %d %X"),'t=',t,'\n', file = log.file, append = log.append)
     }else if(t%%100==0){
       sd<-m2[[t-1]]/(t-2)
       e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t-1)))
       tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
-      cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n')
+      cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n', file = log.file, append = log.append)
       save(phi,t,N,vTot,v,val,permL,sd,perfTolerance,vNull,tolMS,m2,e,file = 'tmpShapley.RData')
+      cat(format(Sys.time(), "%b %d %X"),'t=',t,'Save is completed','\n', file = log.file, append = log.append)
     }
     perm<-makePerm(N)
     v<-rep(0.0,N)
@@ -105,7 +106,7 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
       model<-A(D[perm[1:j],])
       if (is.null(model)) {
         newRes <- vNull
-        cat(format(Sys.time(), "%b %d %X"), t, "Model is null, j =", j, "\n")
+        cat(format(Sys.time(), "%b %d %X"), t, "Model is null, j =", j, "\n", file = log.file, append = log.append)
       } else {
         newRes<-V(model,T)
       }
@@ -116,7 +117,7 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
       }
       if(belowIdx>5){
         v[j:N]<-0
-        cat(format(Sys.time(), "%b %d %X"),t,"Tolerance break:",j,"\n")
+        cat(format(Sys.time(), "%b %d %X"),t,"Tolerance break:",j,"\n", file = log.file, append = log.append)
         break()
       }
       v[j]<-newRes-oldRes
@@ -132,7 +133,7 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
   sd<-m2[[t]]/(t-1)
   e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t)))
   tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
-  cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n')
+  cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n', file = log.file, append = log.append)
   save(phi,t,N,vTot,v,val,permL,perfTolerance,vNull,tolMS,m2,e,file = 'tmpShapley.RData')
   return(list(phi=phi,
               val=val,
