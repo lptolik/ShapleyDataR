@@ -105,7 +105,7 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5){
       model<-A(D[perm[1:j],])
       if (is.null(model)) {
         newRes <- vNull
-        cat(format(Sys.time(), "%b %d %X"), "Model is null, j =", j, "\n")
+        cat(format(Sys.time(), "%b %d %X"), t, "Model is null, j =", j, "\n")
       } else {
         newRes<-V(model,T)
       }
