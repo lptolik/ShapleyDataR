@@ -3,6 +3,7 @@
 export(convCriteria)
 export(dataShapley)
 export(dataShapleyI5)
+export(dataShapleyI5.MT)
 export(extractShapley)
 export(fbaShapley)
 export(makePerm)
