@@ -101,8 +101,12 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
       sd<-m2[[t-1]]/(t-2)
       e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t-1)))
       tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
-      cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n', file = log.file, append = log.append)
-      save(phi[[t-1]],t,N,vTot,v,val[[t-1]],permL[[t-1]],sd,perfTolerance,vNull,tolMS,m2[[t-1]],e,file = rdata.file.name)
+      phiLast <- phi[[t - 1]]
+      valLast <- val[[t - 1]]
+      permLLast <- permL[[t - 1]]
+      m2Last <- m2[[t - 1]]
+      cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV, '\n', file = log.file, append = log.append)
+      save(phiLast,t,N,vTot,v,valLast,permLLast,sd,perfTolerance,vNull,tolMS,m2Last,e,file = rdata.file.name)
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'Save is completed','\n', file = log.file, append = log.append)
     }
     perm<-makePerm(N)
