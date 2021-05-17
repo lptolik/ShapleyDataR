@@ -142,7 +142,6 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
     m2[[t]]<-rep(0.0,N)
     m2[[t]][perm]<-m2[[t-1]][perm]+(v-phi[[t-1]][perm])*(v-phi[[t]][perm])
   }
-  save(phi,t,N,vTot,v,val,permL,perfTolerance,vNull,tolMS,m2,file = paste0(rdata.name, '.RData'))
   sd<-m2[[t]]/(t-1)
   e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t)))
   tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
