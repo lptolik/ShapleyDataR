@@ -157,6 +157,7 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
 }
 
 
+
 #' Data Shapley with different truncation rule (multithreading)
 #'
 #' @param D dataset of N points
@@ -168,22 +169,23 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
 #' @param log.file name of file to be used in `cat` calls
 #' @param log.append logical parameter indicating if `cat` should append its output to log-file
 #' @param rdata.name name of RData file should be used to save intermediate calculation results
+#' @param cluster.size number of CPU cores to be used for multiparallel computing
+#' @param conv_check_step convergence is to be computed and checked every this number of iterations
 #'
 #' @return Shapley value of training points
 #' @export
 #'
-dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=F, rdata.name="tmpShapley", doToleranceBreak=FALSE, cluster.size=4){
+dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=F, rdata.name="tmpShapleyML", cluster.size=4, conv_check_step = 100){
   library(foreach)
-  library(parallel)
+  library(doParallel)
 
-  cl <- makeForkCluster(cluster.size)
-  doParallel::registerDoParallel(cl)
+  cl <- makeForkCluster(cluster.size, outfile = log.file)
+  registerDoParallel(cl)
 
   rdata.directory <- file.path(dirname(rdata.name), 'temp_data')
   if (!dir.exists(rdata.directory)){
     dir.create(rdata.directory, recursive = TRUE)
   }
-
 
   N<-dim(D)[1]
   phi<-list()
@@ -204,83 +206,72 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
   val[[t]]<-rep(0.0,N)
   sd[[t]]<-rep(0.0,N)
   m2[[t]]<-rep(0.0,N)
+  permL[[t]] <- rep(0.0,N)
+  ccount <- 1
   while(!convCriteria(phi,convTol)){
-    t<-t+1
-    if(t<=101){
+    t <- t + conv_check_step
+    if (t <= 101 + conv_check_step){
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'\n', file = log.file, append = log.append)
-    }else if(t%%100==0){
-      rdata.file.name <- file.path(rdata.directory, paste0(t, '_', basename(rdata.name), '.RData'))
-      sd<-m2[[t-1]]/(t-2)
-      e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t-1)))
-      tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
-      cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n', file = log.file, append = log.append)
-      save(phi[[t]],t,N,vTot,v,val[[t]],permL[[t]],sd,perfTolerance,vNull,tolMS,m2[[t]],e,file = rdata.file.name)
-      cat(format(Sys.time(), "%b %d %X"),'t=',t,'Save is completed','\n', file = log.file, append = log.append)
+    }else if ((t - conv_check_step - 1) %% 100 == 0) {
+      ind_to_save <- t - conv_check_step - 1
+      rdata.file.name <- file.path(rdata.directory, paste0(ind_to_save, '_', basename(rdata.name), '.RData'))
+      sd <- m2[[ind_to_save]] / ind_to_save
+      e <- sapply(Z, function(.x) sqrt((.x^2 * sd) / ind_to_save))
+      tolV <- sum(abs(phi[[ind_to_save]] - phi[[ind_to_save - 100]]) / (1e-5 + abs(phi[[ind_to_save]])))
+      phiLast <- phi[[ind_to_save]]
+      valLast <- val[[ind_to_save]]
+      permLLast <- permL[[ind_to_save]]
+      m2Last <- m2[[ind_to_save]]
+      cat(format(Sys.time(), "%b %d %X"),'ind_to_save =',ind_to_save,'tol=',tolV, '\n', file = log.file, append = log.append)
+      save(phiLast,ind_to_save,N,vTot,v,valLast,permLLast,sd,perfTolerance,vNull,tolMS,m2Last,e,file = rdata.file.name)
+      cat(format(Sys.time(), "%b %d %X"),'ind_to_save =',ind_to_save,'Save is completed','\n', file = log.file, append = log.append)
     }
-    perm<-makePerm(N)
-    v<-rep(0.0,N)
-    newRes<-vNull
-    vRes <- foreach(j = 1:N) %dopar% {
-      model <- A(D[perm[1:j], ])
-      if (is.null(model)) {
-        newRes <- vNull
-      } else {
-        newRes <- V(model, T)
-      }
-      newRes
-    }
-    if (doToleranceBreak) {
+    resV <- foreach(i=(t - conv_check_step + 1):t, .combine = combResults, .init = list(val = val, permL = permL)) %dopar% {
+      perm<-makePerm(N)
+      newRes<-vNull
       belowIdx<-0
-      for(j in (1:N)){
-        newRes <- vRes[[j]]
-        if (j == 1){
-          oldRes <- vNull
+      phi.i<-rep(0.0,N)
+      val.i<-rep(0.0,N)
+      m2.i<-rep(0.0,N)
+      v<-rep(0.0,N)
+
+      for (j in (1:N)){
+        oldRes<-newRes
+        model<-A(D[perm[1:j],])
+        if (is.null(model)) {
+          newRes <- vNull
         } else {
-          oldRes <- vRes[[j - 1]]
+          newRes<-V(model,T)
         }
-        if (abs(vTot - newRes) < perfTolerance) {
-          belowIdx <- belowIdx + 1
-        } else{
-          belowIdx <- 0
+        if(abs(vTot-newRes)< perfTolerance){
+          belowIdx<-belowIdx+1
+        }else{
+          belowIdx<-0
         }
-        if (belowIdx > 5) {
-          v[j:N] <- 0
-          cat(
-            format(Sys.time(), "%b %d %X"),
-            t,
-            "Tolerance break:",
-            j,
-            length(phi),
-            "\n",
-            file = log.file,
-            append = log.append
-          )
+        if(belowIdx>5){
+          v[j:N]<-0
+          cat(format(Sys.time(), "%b %d %X"), "Worker #",i,"Tolerance break:",j,"\n")
           break()
         }
-        v[j] <- newRes - oldRes
+        v[j]<-newRes-oldRes
       }
-    } else {
-      for(j in (1:N)){
-        newRes <- vRes[[j]]
-        if (j == 1){
-          oldRes <- vNull
-        } else {
-          oldRes <- vRes[[j - 1]]
-        }
-        v[j] <- newRes - oldRes
-      }
+      list(i = i, perm = perm, v = v, phi = phi.i, m2 = m2.i, val = val.i)
     }
 
-    val[[t]]<-rep(0.0,N)
-    val[[t]][perm]<-v
-    permL[[t]]<-perm
-    phi[[t]]<-rep(0.0,N)
-    phi[[t]][perm]<-phi[[t-1]][perm]+(v-phi[[t-1]][perm])/t
-    m2[[t]]<-rep(0.0,N)
-    m2[[t]][perm]<-m2[[t-1]][perm]+(v-phi[[t-1]][perm])*(v-phi[[t]][perm])
+    for (i in (t - conv_check_step + 1):t) {
+      perm <- resV$permL[[i]]
+      v <- resV$val[[i]][perm]
+      val[[i]] <- resV$val[[i]]
+      phi[[i]] <- resV$phi[[i]]
+      m2[[i]] <- resV$m2[[i]]
+      phi[[i]][perm]<-phi[[i-1]][perm]+(v-phi[[i-1]][perm])/i
+      m2[[i]][perm]<-m2[[i-1]][perm]+(v-phi[[i-1]][perm])*(v-phi[[i]][perm])
+      permL[[i]] <- perm
+    }
+    ccount <- ccount + 1
   }
   stopCluster(cl)
-  save(phi,t,N,vTot,v,val,permL,perfTolerance,vNull,tolMS,m2,file = paste0(rdata.name, '.RData'))
+
   sd<-m2[[t]]/(t-1)
   e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t)))
   tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
@@ -292,5 +283,6 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
               sd=sd,
               err01=e[,1],
               err05=e[,2],
-              err10=e[,3]))
+              err10=e[,3],
+              temp_rdata_dir = rdata.directory))
 }

@@ -13,9 +13,9 @@ dataShapleyI5.MT(
   convTol = tol * 5,
   log.file = "",
   log.append = F,
-  rdata.name = "tmpShapley",
-  doToleranceBreak = FALSE,
-  cluster.size = 4
+  rdata.name = "tmpShapleyML",
+  cluster.size = 4,
+  conv_check_step = 100
 )
 }
 \arguments{
@@ -36,6 +36,10 @@ dataShapleyI5.MT(
 \item{log.append}{logical parameter indicating if `cat` should append its output to log-file}
 
 \item{rdata.name}{name of RData file should be used to save intermediate calculation results}
+
+\item{cluster.size}{number of CPU cores to be used for multiparallel computing}
+
+\item{conv_check_step}{convergence is to be computed and checked every this number of iterations}
 }
 \value{
 Shapley value of training points

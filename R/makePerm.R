@@ -40,3 +40,25 @@ tolMeanScore<-function(model,V,T){
   }
   return(list(min=min(res),mean=mean(res),std=sd(res),median=median(res),iqr=IQR(res),max=max(res)))
 }
+
+
+#' Combine results obtained from separate workers
+#'
+#' @param results list of combined results
+#' @param x list of results from one worker
+#'
+#' @return new list of combined results
+#' @export
+combResults <-function(results, x){
+  i <- x$i
+  perm <- x$perm
+  v <- x$v
+  results$val[[i]] <- x$val
+  results$val[[i]][perm] <- v
+  results$permL[[i]] <- perm
+  results$phi[[i]] <- x$phi
+  results$m2[[i]] <- x$m2
+  return(results)
+
+}
+
