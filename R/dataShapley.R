@@ -227,6 +227,7 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
       cat(format(Sys.time(), "%b %d %X"),'ind_to_save =',ind_to_save,'Save is completed','\n', file = log.file, append = log.append)
     }
     resV <- foreach(i=(t - conv_check_step + 1):t, .combine = combResults, .init = list(val = val, permL = permL)) %dopar% {
+      set.seed(i)
       perm<-makePerm(N)
       newRes<-vNull
       belowIdx<-0
