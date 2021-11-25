@@ -207,7 +207,6 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
   sd[[t]]<-rep(0.0,N)
   m2[[t]]<-rep(0.0,N)
   permL[[t]] <- rep(0.0,N)
-  ccount <- 1
   while(!convCriteria(phi,convTol)){
     t <- t + conv_check_step
     if (t <= 101 + conv_check_step){
@@ -218,16 +217,12 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
       sd <- m2[[ind_to_save]] / ind_to_save
       e <- sapply(Z, function(.x) sqrt((.x^2 * sd) / ind_to_save))
       tolV <- sum(abs(phi[[ind_to_save]] - phi[[ind_to_save - 100]]) / (1e-5 + abs(phi[[ind_to_save]])))
-      phiLast <- phi[[ind_to_save]]
-      valLast <- val[[ind_to_save]]
-      permLLast <- permL[[ind_to_save]]
-      m2Last <- m2[[ind_to_save]]
       cat(format(Sys.time(), "%b %d %X"),'ind_to_save =',ind_to_save,'tol=',tolV, '\n', file = log.file, append = log.append)
-      save(phiLast,ind_to_save,N,vTot,v,valLast,permLLast,sd,perfTolerance,vNull,tolMS,m2Last,e,file = rdata.file.name)
+      save(phi,ind_to_save,N,vTot,v,val,permLsd,perfTolerance,vNull,tolMS,m2,e,file = rdata.file.name)
       cat(format(Sys.time(), "%b %d %X"),'ind_to_save =',ind_to_save,'Save is completed','\n', file = log.file, append = log.append)
     }
-    resV <- foreach(i=(t - conv_check_step + 1):t, .combine = combResults, .init = list(val = val, permL = permL)) %dopar% {
-      set.seed(i)
+    resV <- foreach(i=1:conv_check_step, .combine = combResults, .init = list(val = val, permL = permL)) %dopar% {
+      set.seed(as.numeric(Sys.time()) + i)
       perm<-makePerm(N)
       newRes<-vNull
       belowIdx<-0
@@ -251,7 +246,7 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
         }
         if(belowIdx>5){
           v[j:N]<-0
-          cat(format(Sys.time(), "%b %d %X"), "Worker #",i,"Tolerance break:",j,"\n")
+          cat(format(Sys.time(), "%b %d %X"), "Worker #",i + t,"Tolerance break:",j,"\n")
           break()
         }
         v[j]<-newRes-oldRes
@@ -259,7 +254,7 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
       list(i = i, perm = perm, v = v, phi = phi.i, m2 = m2.i, val = val.i)
     }
 
-    for (i in (t - conv_check_step + 1):t) {
+    for (i in 1:conv_check_step) {
       perm <- resV$permL[[i]]
       v <- resV$val[[i]][perm]
       val[[i]] <- resV$val[[i]]
@@ -269,7 +264,6 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
       m2[[i]][perm]<-m2[[i-1]][perm]+(v-phi[[i-1]][perm])*(v-phi[[i]][perm])
       permL[[i]] <- perm
     }
-    ccount <- ccount + 1
   }
   stopCluster(cl)
 
