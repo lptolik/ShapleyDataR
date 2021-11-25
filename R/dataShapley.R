@@ -214,11 +214,11 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
     }else if ((t - conv_check_step - 1) %% 100 == 0) {
       ind_to_save <- t - conv_check_step - 1
       rdata.file.name <- file.path(rdata.directory, paste0(ind_to_save, '_', basename(rdata.name), '.RData'))
-      sd <- m2[[ind_to_save]] / ind_to_save
-      e <- sapply(Z, function(.x) sqrt((.x^2 * sd) / ind_to_save))
-      tolV <- sum(abs(phi[[ind_to_save]] - phi[[ind_to_save - 100]]) / (1e-5 + abs(phi[[ind_to_save]])))
+      sd <- m2[[conv_check_step]] / (conv_check_step - 1)
+      e <- sapply(Z, function(.x) sqrt((.x^2 * sd) / conv_check_step))
+      tolV <- sum(abs(phi[[conv_check_step]] - phi[[conv_check_step - 100]]) / (1e-5 + abs(phi[[conv_check_step]])))
       cat(format(Sys.time(), "%b %d %X"),'ind_to_save =',ind_to_save,'tol=',tolV, '\n', file = log.file, append = log.append)
-      save(phi,ind_to_save,N,vTot,v,val,permLsd,perfTolerance,vNull,tolMS,m2,e,file = rdata.file.name)
+      save(phi,ind_to_save,N,vTot,v,val,permL,sd,perfTolerance,vNull,tolMS,m2,e,file = rdata.file.name)
       cat(format(Sys.time(), "%b %d %X"),'ind_to_save =',ind_to_save,'Save is completed','\n', file = log.file, append = log.append)
     }
     resV <- foreach(i=1:conv_check_step, .combine = combResults, .init = list(val = val, permL = permL)) %dopar% {
@@ -246,7 +246,7 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
         }
         if(belowIdx>5){
           v[j:N]<-0
-          cat(format(Sys.time(), "%b %d %X"), "Worker #",i + t,"Tolerance break:",j,"\n")
+          cat(format(Sys.time(), "%b %d %X"), "Worker #",i + t - conv_check_step,"Tolerance break:",j,"\n")
           break()
         }
         v[j]<-newRes-oldRes
@@ -254,7 +254,7 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
       list(i = i, perm = perm, v = v, phi = phi.i, m2 = m2.i, val = val.i)
     }
 
-    for (i in 1:conv_check_step) {
+    for (i in 2:conv_check_step) {
       perm <- resV$permL[[i]]
       v <- resV$val[[i]][perm]
       val[[i]] <- resV$val[[i]]
@@ -266,11 +266,10 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
     }
   }
   stopCluster(cl)
-
-  sd<-m2[[t]]/(t-1)
-  e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(t)))
-  tolV<-sum(abs(phi[[t-1]]-phi[[t-101]])/(1e-5+abs(phi[[t-1]])))
-  cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV,'\n', file = log.file, append = log.append)
+  sd<-m2[[conv_check_step]]/(conv_check_step - 1)
+  e<-sapply(Z,function(.x)sqrt((.x^2*sd)/(conv_check_step)))
+  tolV<-sum(abs(phi[[conv_check_step]]-phi[[conv_check_step - 100]])/(1e-5 + abs(phi[[conv_check_step]])))
+  cat(format(Sys.time(), "%b %d %X"),'t =',t,'tol =',tolV,'\n', file = log.file, append = log.append)
   save(phi,t,N,vTot,v,val,permL,perfTolerance,vNull,tolMS,m2,e,file = paste0(rdata.name, '.RData'))
   return(list(phi=phi,
               val=val,
