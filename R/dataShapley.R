@@ -226,9 +226,6 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
       perm<-makePerm(N)
       newRes<-vNull
       belowIdx<-0
-      phi.i<-rep(0.0,N)
-      val.i<-rep(0.0,N)
-      m2.i<-rep(0.0,N)
       v<-rep(0.0,N)
 
       for (j in (1:N)){
@@ -251,16 +248,27 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
         }
         v[j]<-newRes-oldRes
       }
-      list(i = i, perm = perm, v = v, phi = phi.i, m2 = m2.i, val = val.i)
+      list(i = i, perm = perm, v = v)
+    }
+    if (t - conv_check_step > 1) {
+      val[[i]] <- rep(0.0,N)
+      phi[[i]] <- rep(0.0,N)
+      m2[[i]] <- rep(0.0,N)
+      perm <- resV$permL[[1]]
+      v <- resV$val[[1]]
+      val[[1]][perm] <- v
+      phi[[1]][perm]<-phi[[conv_check_step]][perm]+(v-phi[[conv_check_step]][perm])/(t - conv_check_step)
+      m2[[1]][perm]<-m2[[conv_check_step]][perm]+(v-phi[[conv_check_step]][perm])*(v-phi[[i]][perm])
     }
 
     for (i in 2:conv_check_step) {
       perm <- resV$permL[[i]]
-      v <- resV$val[[i]][perm]
-      val[[i]] <- resV$val[[i]]
-      phi[[i]] <- resV$phi[[i]]
-      m2[[i]] <- resV$m2[[i]]
-      phi[[i]][perm]<-phi[[i-1]][perm]+(v-phi[[i-1]][perm])/i
+      v <- resV$val[[i]]
+      val[[i]] <- rep(0.0,N)
+      phi[[i]] <- rep(0.0,N)
+      m2[[i]] <- rep(0.0,N)
+      val[[i]][perm] <- v
+      phi[[i]][perm]<-phi[[i-1]][perm]+(v-phi[[i-1]][perm])/(t - conv_check_step + i - 1)
       m2[[i]][perm]<-m2[[i-1]][perm]+(v-phi[[i-1]][perm])*(v-phi[[i]][perm])
       permL[[i]] <- perm
     }

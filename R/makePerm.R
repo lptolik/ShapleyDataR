@@ -53,11 +53,8 @@ combResults <-function(results, x){
   i <- x$i
   perm <- x$perm
   v <- x$v
-  results$val[[i]] <- x$val
-  results$val[[i]][perm] <- v
+  results$val[[i]]<- v
   results$permL[[i]] <- perm
-  results$phi[[i]] <- x$phi
-  results$m2[[i]] <- x$m2
   return(results)
 
 }
