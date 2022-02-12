@@ -175,17 +175,14 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
 #' @return Shapley value of training points
 #' @export
 #'
-dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=F, rdata.name="tmpShapleyML", cluster.size=4, conv_check_step = 100){
+dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=F, rdata.name="tmpShapleyML", cluster.size=4, conv_check_step = 100, .continue = TRUE){
   library(foreach)
   library(doParallel)
 
   cl <- makeForkCluster(cluster.size, outfile = log.file)
   registerDoParallel(cl)
 
-  rdata.directory <- file.path(dirname(rdata.name), 'temp_data')
-  if (!dir.exists(rdata.directory)){
-    dir.create(rdata.directory, recursive = TRUE)
-  }
+
 
   N<-dim(D)[1]
   phi<-list()
@@ -207,6 +204,28 @@ dataShapleyI5.MT<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.appe
   sd[[t]]<-rep(0.0,N)
   m2[[t]]<-rep(0.0,N)
   permL[[t]] <- rep(0.0,N)
+
+  rdata.directory <- file.path(dirname(rdata.name), 'temp_data')
+  if (!dir.exists(rdata.directory)) {
+  dir.create(rdata.directory, recursive = TRUE)
+} else {
+  if (.continue) {
+    prev_files_list <- list.files(rdata.directory)
+    if (length(prev_files_list) > 1) {
+      file_numbers <- as.integer(stringi::stri_replace_all_fixed(prev_files_list, paste0("_", basename(rdata.name), ".RData"), ""))
+      if (max(file_numbers) / conv_check_step == length(file_numbers)) {
+        last_rdata <- paste0(max(file_numbers), "_", basename(rdata.name), ".RData")
+        load(file.path(rdata.directory, last_rdata))
+        t <- ind_to_save + 1
+      } else {
+        last_rdata <- paste0(max(file_numbers) - conv_check_step, "_", basename(rdata.name), ".RData")
+        load(file.path(rdata.directory, last_rdata))
+        t <- ind_to_save + 1 - conv_check_step
+      }
+    }
+  }
+}
+
   while(!convCriteria(phi,convTol)){
     t <- t + conv_check_step
     if (t <= 101 + conv_check_step){
