@@ -1,7 +1,7 @@
 Package: ShapleyDataR
 Type: Package
 Title: Calculates Shapley values for data in ML projects
-Version: 0.1.1
+Version: 1.0.0
 Author: Anatoly Sorokin <lptolik@gmail.com>
 Maintainer: The package maintainer <yourself@somewhere.net>
 Description: More about what it does (maybe more than one line)
