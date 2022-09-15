@@ -178,11 +178,12 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
 #'
 dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file = "",
                              log.append = F, rdata.name = "tmpShapleyML", cluster.size = 4,
-                             conv_check_step = 100, base.seed = as.numeric(Sys.time()), .continue = TRUE) {
+                             conv_check_step = 100, base.seed = as.numeric(Sys.time()), .continue = TRUE,
+                             .packages = c()) {
   library(foreach)
   library(doParallel)
 
-  cl <- makeForkCluster(cluster.size, outfile = log.file)
+  cl <- makeCluster(cluster.size, outfile = log.file)
   registerDoParallel(cl)
   N <- dim(D)[1]
   phi <- list()
@@ -239,7 +240,7 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
       save(phi, ind_to_save, N, vTot, v, val, permL, sd, perfTolerance, vNull, tolMS, m2, e, file = rdata.file.name)
       cat(format(Sys.time(), "%b %d %X"), "ind_to_save =", ind_to_save, "Save is completed", "\n", file = log.file, append = log.append)
     }
-    resV <- foreach(i = 1:conv_check_step, .combine = combResults, .init = list(val = val, permL = permL)) %dopar% {
+    resV <- foreach(i = 1:conv_check_step, .combine = combResults, .init = list(val = val, permL = permL), .packages = .packages) %dopar% {
       set.seed(base.seed + i)
       perm <- makePerm(N)
       newRes <- vNull
