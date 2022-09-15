@@ -15,7 +15,9 @@ dataShapleyI5.MT(
   log.append = F,
   rdata.name = "tmpShapleyML",
   cluster.size = 4,
-  conv_check_step = 100
+  conv_check_step = 100,
+  base.seed = as.numeric(Sys.time()),
+  .continue = TRUE
 )
 }
 \arguments{
@@ -27,7 +29,7 @@ dataShapleyI5.MT(
 
 \item{T}{test dataset}
 
-\item{tol}{trancation tolerance}
+\item{tol}{truncation tolerance}
 
 \item{convTol}{convergence tolerance}
 
@@ -40,6 +42,8 @@ dataShapleyI5.MT(
 \item{cluster.size}{number of CPU cores to be used for multiparallel computing}
 
 \item{conv_check_step}{convergence is to be computed and checked every this number of iterations}
+
+\item{base.seed}{Seed value to be used as basic value in different workers}
 }
 \value{
 Shapley value of training points
