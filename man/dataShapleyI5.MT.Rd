@@ -17,7 +17,8 @@ dataShapleyI5.MT(
   cluster.size = 4,
   conv_check_step = 100,
   base.seed = as.numeric(Sys.time()),
-  .continue = TRUE
+  .continue = TRUE,
+  .packages = c()
 )
 }
 \arguments{
