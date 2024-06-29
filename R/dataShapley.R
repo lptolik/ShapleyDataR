@@ -194,6 +194,7 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
   m2 <- list()
   permL <- list()
   model <- A(D)
+  cat("default model calc\n")
   tolMS <- tolMeanScore(model, V, T)
   vTot <- tolMS$mean # V(D,model,T)
   v <- rep(0.0, N)
@@ -207,6 +208,7 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
   permL[[t]] <- rep(0.0, N)
 
   rdata.directory <- file.path(dirname(rdata.name), "temp_data")
+  cat(rdata.directory, "\n")
   if (!dir.exists(rdata.directory)) {
     dir.create(rdata.directory, recursive = TRUE)
   } else {
@@ -269,19 +271,27 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
       }
       list(i = i, perm = perm, v = v)
     }
+    start_idx <- 1
+    phi_old <- phi
+    m2_old <- m2
+    phi <- list()
+    sd <- list()
+    val <- list()
+    m2 <- list()
+    permL <- list()
     if (t - conv_check_step > 1) {
+      start_idx <- 2
       val[[1]] <- rep(0.0, N)
       phi[[1]] <- rep(0.0, N)
       m2[[1]] <- rep(0.0, N)
       perm <- resV$permL[[1]]
       v <- resV$val[[1]]
       val[[1]][perm] <- v
-      phi[[1]][perm] <- phi[[conv_check_step]][perm] + (v - phi[[conv_check_step]][perm]) / (t - conv_check_step)
-      m2[[1]][perm] <- m2[[conv_check_step]][perm] + (v - phi[[conv_check_step]][perm]) * (v - phi[[1]][perm])
+      phi[[1]][perm] <- phi_old[[conv_check_step]][perm] + (v - phi_old[[conv_check_step]][perm]) / (t - conv_check_step)
+      m2[[1]][perm] <- m2_old[[conv_check_step]][perm] + (v - phi_old[[conv_check_step]][perm]) * (v - phi[[1]][perm])
       permL[[1]] <- perm
     }
-
-    for (i in 2:conv_check_step) {
+    for (i in start_idx:conv_check_step) {
       perm <- resV$permL[[i]]
       v <- resV$val[[i]]
       val[[i]] <- rep(0.0, N)
@@ -291,6 +301,10 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
       phi[[i]][perm] <- phi[[i - 1]][perm] + (v - phi[[i - 1]][perm]) / (t - conv_check_step + i - 1)
       m2[[i]][perm] <- m2[[i - 1]][perm] + (v - phi[[i - 1]][perm]) * (v - phi[[i]][perm])
       permL[[i]] <- perm
+      if (convCriteria(phi,convTol)) {
+        cat(format(Sys.time(), "%b %d %X"), "Convergency criteria has been met at", i, "Phi length:", length(phi), "\n")
+        break()
+      }
     }
   }
   stopCluster(cl)
