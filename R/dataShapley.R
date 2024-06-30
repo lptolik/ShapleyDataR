@@ -201,11 +201,6 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
   vNull <- V(NULL, T)
   perfTolerance <- tol * vTot
   t <- 1
-  phi[[t]] <- rep(0.0, N)
-  val[[t]] <- rep(0.0, N)
-  sd[[t]] <- rep(0.0, N)
-  m2[[t]] <- rep(0.0, N)
-  permL[[t]] <- rep(0.0, N)
 
   rdata.directory <- file.path(dirname(rdata.name), "temp_data")
   cat(rdata.directory, "\n")
@@ -278,16 +273,20 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
     val <- list()
     m2 <- list()
     permL <- list()
+    phi[[1]] <- rep(0.0, N)
+    val[[1]] <- rep(0.0, N)
+    sd[[1]] <- rep(0.0, N)
+    m2[[1]] <- rep(0.0, N)
+
     if (t - conv_check_step > 1) {
-      val[[1]] <- rep(0.0, N)
-      phi[[1]] <- rep(0.0, N)
-      m2[[1]] <- rep(0.0, N)
       perm <- resV$permL[[1]]
       v <- resV$val[[1]]
       val[[1]][perm] <- v
       phi[[1]][perm] <- phi_old[[conv_check_step]][perm] + (v - phi_old[[conv_check_step]][perm]) / (t - conv_check_step)
       m2[[1]][perm] <- m2_old[[conv_check_step]][perm] + (v - phi_old[[conv_check_step]][perm]) * (v - phi[[1]][perm])
       permL[[1]] <- perm
+    } else {
+      permL[[1]] <- rep(0.0, N)
     }
     for (i in 2:conv_check_step) {
       perm <- resV$permL[[i]]
@@ -300,7 +299,11 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
       m2[[i]][perm] <- m2[[i - 1]][perm] + (v - phi[[i - 1]][perm]) * (v - phi[[i]][perm])
       permL[[i]] <- perm
       if (convCriteria(phi,convTol)) {
-        cat(format(Sys.time(), "%b %d %X"), "Convergency criteria has been met at", i, "Phi length:", length(phi), "\n")
+        cat(format(Sys.time(), "%b %d %X"),
+            "Convergency criteria has been met at",
+            t - conv_check_step + i,
+            "Phi length:",
+            length(phi), "\n")
         break()
       }
     }
