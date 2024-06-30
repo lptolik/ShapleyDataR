@@ -271,7 +271,6 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
       }
       list(i = i, perm = perm, v = v)
     }
-    start_idx <- 1
     phi_old <- phi
     m2_old <- m2
     phi <- list()
@@ -280,7 +279,6 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
     m2 <- list()
     permL <- list()
     if (t - conv_check_step > 1) {
-      start_idx <- 2
       val[[1]] <- rep(0.0, N)
       phi[[1]] <- rep(0.0, N)
       m2[[1]] <- rep(0.0, N)
@@ -291,7 +289,7 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
       m2[[1]][perm] <- m2_old[[conv_check_step]][perm] + (v - phi_old[[conv_check_step]][perm]) * (v - phi[[1]][perm])
       permL[[1]] <- perm
     }
-    for (i in start_idx:conv_check_step) {
+    for (i in 2:conv_check_step) {
       perm <- resV$permL[[i]]
       v <- resV$val[[i]]
       val[[i]] <- rep(0.0, N)
