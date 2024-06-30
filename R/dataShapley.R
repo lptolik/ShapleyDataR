@@ -233,7 +233,7 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
     if (t <= 101 + conv_check_step) {
       cat(format(Sys.time(), "%b %d %X"), "t=", t, "\n", file = log.file, append = log.append)
     } else if ((t - conv_check_step - 1) %% 100 == 0) {
-      ind_to_save <- t - conv_check_step - 1
+      ind_to_save <- t - conv_check_step
       rdata.file.name <- file.path(rdata.directory, paste0(ind_to_save, "_", basename(rdata.name), ".RData"))
       sd <- m2[[conv_check_step]] / (conv_check_step - 1)
       e <- sapply(Z, function(.x) sqrt((.x^2 * sd) / conv_check_step))
