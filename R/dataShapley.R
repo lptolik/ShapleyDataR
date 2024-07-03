@@ -214,11 +214,11 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
         if (max(file_numbers) / conv_check_step == length(file_numbers)) {
           last_rdata <- paste0(max(file_numbers), "_", basename(rdata.name), ".RData")
           load(file.path(rdata.directory, last_rdata))
-          t <- ind_to_save + 1
+          t <- ind_to_save
         } else {
           last_rdata <- paste0(max(file_numbers) - conv_check_step, "_", basename(rdata.name), ".RData")
           load(file.path(rdata.directory, last_rdata))
-          t <- ind_to_save + 1 - conv_check_step
+          t <- ind_to_save - conv_check_step
         }
       }
     }
