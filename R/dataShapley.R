@@ -303,15 +303,16 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
             "Convergency criteria has been met at",
             t - conv_check_step + i,
             "Phi length:",
-            length(phi), "\n")
+            length(phi), "\n", file = log.file, append = log.append)
         break()
       }
     }
   }
   stopCluster(cl)
-  sd <- m2[[conv_check_step]] / (conv_check_step - 1)
-  e <- sapply(Z, function(.x) sqrt((.x^2 * sd) / (conv_check_step)))
-  tolV <- sum(abs(phi[[conv_check_step]] - phi[[conv_check_step - 100]]) / (1e-5 + abs(phi[[conv_check_step]])))
+  phi_count <- length(phi)
+  sd <- m2[[phi_count]] / (t - conv_check_step + phi_count - 1)
+  e <- sapply(Z, function(.x) sqrt((.x^2 * sd) / (phi_count)))
+  tolV <- sum(abs(phi[[phi_count]] - phi[[phi_count - 100]]) / (1e-5 + abs(phi[[phi_count]])))
   cat(format(Sys.time(), "%b %d %X"), "t =", t, "tol =", tolV, "\n", file = log.file, append = log.append)
   save(phi, t, N, vTot, v, val, permL, perfTolerance, vNull, tolMS, m2, e, file = paste0(rdata.name, ".RData"))
   return(list(
