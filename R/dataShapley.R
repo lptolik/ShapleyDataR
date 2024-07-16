@@ -237,9 +237,10 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
       save(phi, ind_to_save, N, vTot, v, val, permL, sd, perfTolerance, vNull, tolMS, m2, e, file = rdata.file.name)
       cat(format(Sys.time(), "%b %d %X"), "ind_to_save =", ind_to_save, "Save is completed", "\n", file = log.file, append = log.append)
     }
+    perm_lists <- lapply(1:conv_check_step, function(x) makePerm(N))
     resV <- foreach(i = 1:conv_check_step, .combine = combResults, .init = list(val = val, permL = permL), .packages = .packages) %dopar% {
-      set.seed(base.seed + i)
-      perm <- makePerm(N)
+      set.seed(base.seed + i + t - conv_check_step)
+      perm <- perm_lists[[i]]
       newRes <- vNull
       belowIdx <- 0
       v <- rep(0.0, N)
