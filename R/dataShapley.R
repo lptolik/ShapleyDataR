@@ -109,15 +109,19 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
             basename(rdata.name), ".RData"
           )
           load(file.path(rdata.directory, last_rdata))
-          t <- max(file_numbers) + 1
+          t <- max(file_numbers)
         } else {
           last_rdata <- paste0(
             max(file_numbers) - conv_check_step, "_",
             basename(rdata.name), ".RData"
           )
           load(file.path(rdata.directory, last_rdata))
-          t <- max(file_numbers) - conv_check_step + 1
+          t <- max(file_numbers) - conv_check_step
         }
+        phi[[t - 1]] <- phiLast
+        m2[[t - 1]] <- m2Last
+        permL[[t - 1]] <- permLLast
+        val[[t - 1]] <- valLast
       }
     }
   }
