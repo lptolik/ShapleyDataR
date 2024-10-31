@@ -80,10 +80,10 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
   m2 <- list()
   permL <- list()
   model <- A(D)
-  tolMS <- tolMeanScore(model, A, T)
+  tolMS <- tolMeanScore(model, V, T)
   vTot <- tolMS$mean
   v <- rep(0.0, N)
-  vNull <- A(NULL, T)
+  vNull <- V(NULL, T)
   perfTolerance <- tol * vTot
   t <- 1
   phi[[t]] <- rep(0.0, N)
