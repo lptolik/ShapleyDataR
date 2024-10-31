@@ -68,30 +68,59 @@ dataShapley<-function(D,A,V,T,tol=0.05,convTol=tol){
 #' @return Shapley value of training points
 #' @export
 #'
-dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=F, rdata.name="tmpShapley"){
-  rdata.directory <- file.path(dirname(rdata.name), 'temp_data')
-  if (!dir.exists(rdata.directory)){
-    dir.create(rdata.directory, recursive = TRUE)
-  }
-  N<-dim(D)[1]
-  phi<-list()
-  sd<-list()
-  val<-list()
-  alph<-c(0.01,0.05,0.1)
-  Z<-qnorm(alph,lower.tail = FALSE)
+dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=F, rdata.name="tmpShapley", .continue = TRUE){
+  conv_check_step <- 100
+  rdata.directory <- file.path(dirname(rdata.name), "temp_data")
+  N <- dim(D)[1]
+  phi <- list()
+  sd <- list()
+  val <- list()
+  alph <- c(0.01, 0.05, 0.1)
+  Z <- qnorm(alph, lower.tail = FALSE)
   m2 <- list()
-  permL<-list()
-  model<-A(D)
-  tolMS<-tolMeanScore(model,V,T)
-  vTot<-tolMS$mean #V(D,model,T)
-  v<-rep(0.0,N)
-  vNull<-V(NULL, T)
-  perfTolerance<-tol*vTot
-  t<-1
-  phi[[t]]<-rep(0.0,N)
-  val[[t]]<-rep(0.0,N)
-  sd[[t]]<-rep(0.0,N)
-  m2[[t]]<-rep(0.0,N)
+  permL <- list()
+  model <- A(D)
+  tolMS <- tolMeanScore(model, A, T)
+  vTot <- tolMS$mean
+  v <- rep(0.0, N)
+  vNull <- A(NULL, T)
+  perfTolerance <- tol * vTot
+  t <- 1
+  phi[[t]] <- rep(0.0, N)
+  val[[t]] <- rep(0.0, N)
+  sd[[t]] <- rep(0.0, N)
+  m2[[t]] <- rep(0.0, N)
+  cat(rdata.directory, "\n", file = log.file, append = log.append)
+  if (!dir.exists(rdata.directory)) {
+    dir.create(rdata.directory, recursive = TRUE)
+  } else {
+    if (.continue) {
+      prev_files_list <- list.files(rdata.directory)
+      if (length(prev_files_list) > 1) {
+        file_numbers <- as.integer(
+          stringi::stri_replace_all_fixed(
+            prev_files_list,
+            paste0("_", basename(rdata.name), ".RData"), ""
+          )
+        )
+        if (max(file_numbers) / conv_check_step == length(file_numbers) + 1) {
+          last_rdata <- paste0(
+            max(file_numbers), "_",
+            basename(rdata.name), ".RData"
+          )
+          load(file.path(rdata.directory, last_rdata))
+          t <- max(file_numbers) + 1
+        } else {
+          last_rdata <- paste0(
+            max(file_numbers) - conv_check_step, "_",
+            basename(rdata.name), ".RData"
+          )
+          load(file.path(rdata.directory, last_rdata))
+          t <- max(file_numbers) - conv_check_step + 1
+        }
+      }
+    }
+  }
   while(!convCriteria(phi,convTol)){
     t<-t+1
     if(t<=101){
@@ -106,7 +135,10 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
       permLLast <- permL[[t - 1]]
       m2Last <- m2[[t - 1]]
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'tol=',tolV, '\n', file = log.file, append = log.append)
-      save(phiLast,t,N,vTot,v,valLast,permLLast,sd,perfTolerance,vNull,tolMS,m2Last,e,file = rdata.file.name)
+      save(
+        phiLast,t,N,vTot,v,valLast,permLLast,sd,perfTolerance,vNull,tolMS,
+        m2Last,e,file = rdata.file.name
+      )
       cat(format(Sys.time(), "%b %d %X"),'t=',t,'Save is completed','\n', file = log.file, append = log.append)
     }
     perm<-makePerm(N)
