@@ -117,15 +117,20 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
           load(file.path(rdata.directory, last_rdata))
         }
         phi[[t]] <- phiLast
-        phi[((t - 100): (t - 1))] <- lapply(
-          ((t - 100): (t - 1)),
+        phi[((t - conv_check_step): (t - 1))] <- lapply(
+          ((t - conv_check_step): (t - 1)),
           function(x) {
-            rep_len(0, length(phiLast))
+            rep_len(0, N)
           }
         )
         m2[[t]] <- m2Last
         permL[[t]] <- permLLast
         val[[t]] <- valLast
+        cat(
+          format(Sys.time(), "%b %d %X"),
+          "Loaded data from previous calculation",
+          "t=", t, "\n", file = log.file, append = log.append
+        )
       }
     }
   }
