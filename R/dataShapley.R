@@ -109,26 +109,34 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
             basename(rdata.name), ".RData"
           )
           load(file.path(rdata.directory, last_rdata))
-          t <- max(file_numbers)
         } else {
           last_rdata <- paste0(
             max(file_numbers) - conv_check_step, "_",
             basename(rdata.name), ".RData"
           )
           load(file.path(rdata.directory, last_rdata))
-          t <- max(file_numbers) - conv_check_step
         }
-        phi[[t - 1]] <- phiLast
-        m2[[t - 1]] <- m2Last
-        permL[[t - 1]] <- permLLast
-        val[[t - 1]] <- valLast
+        phi[[t]] <- phiLast
+        phi[((t - 100): (t - 1))] <- lapply(
+          ((t - 100): (t - 1)),
+          function(x) {
+            rep_len(0, length(phiLast))
+          }
+        )
+        m2[[t]] <- m2Last
+        permL[[t]] <- permLLast
+        val[[t]] <- valLast
       }
     }
   }
   while(!convCriteria(phi,convTol)){
     t<-t+1
     if(t<=101){
-      cat(format(Sys.time(), "%b %d %X"),'t=',t,'\n', file = log.file, append = log.append)
+      cat(
+        format(
+          Sys.time(), "%b %d %X"),
+          't=',t,'\n', file = log.file, append = log.append
+      )
     }else if(t%%100==0){
       rdata.file.name <- file.path(rdata.directory, paste0(t, '_', basename(rdata.name), '.RData'))
       sd<-m2[[t-1]]/(t-2)
