@@ -242,7 +242,7 @@ dataShapleyI5.MT <- function(
   D, A, V, T, tol = 0.01, conv_tol = tol * 5, log.file = "",
   log.append = FALSE, rdata_name = "tmpShapleyML", cluster_size = 4,
   conv_check_step = 100, base_seed = as.numeric(Sys.time()),
-  .continue = TRUE, .packages = c(), perm_threshold = 5
+  perm_threshold = 5, .continue = TRUE, .packages = c()
 ) {
   library(foreach)
   library(doParallel)
