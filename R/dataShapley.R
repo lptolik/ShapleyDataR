@@ -62,13 +62,16 @@ dataShapley<-function(D,A,V,T,tol=0.05,convTol=tol){
 #' @param tol trancation tolerance
 #' @param convTol convergence tolerance
 #' @param log.file name of file to be used in `cat` calls
-#' @param log.append logical parameter indicating if `cat` should append its output to log-file
-#' @param rdata.name name of RData file should be used to save intermediate calculation results
+#' @param log.append logical parameter indicating if `cat` should append its
+#' output to log-file
+#' @param rdata.name name of RData file should be used to save intermediate
+#' calculation results
+#' @param perm_threshold Maximum number of non-valuable permutations
 #'
 #' @return Shapley value of training points
 #' @export
 #'
-dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=F, rdata.name="tmpShapley", .continue = TRUE){
+dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=F, rdata.name="tmpShapley", .continue = TRUE, perm_threshold = 5){
   conv_check_step <- 100
   rdata.directory <- file.path(dirname(rdata.name), "temp_data")
   N <- dim(D)[1]
@@ -181,7 +184,7 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
       }else{
         belowIdx<-0
       }
-      if(belowIdx>5){
+      if (belowIdx > perm_threshold) {
         v[j:N]<-0
         cat(format(Sys.time(), "%b %d %X"),t,"Tolerance break:",j, length(phi),"\n", file = log.file, append = log.append)
         break()
@@ -221,11 +224,16 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
 #' @param tol truncation tolerance
 #' @param convTol convergence tolerance
 #' @param log.file name of file to be used in `cat` calls
-#' @param log.append logical parameter indicating if `cat` should append its output to log-file
-#' @param rdata.name name of RData file should be used to save intermediate calculation results
-#' @param cluster.size number of CPU cores to be used for multiparallel computing
-#' @param conv_check_step convergence is to be computed and checked every this number of iterations
-#' @param base.seed Seed value to be used as basic value in different workers
+#' @param log.append logical parameter indicating if `cat` should
+#' append its output to log-file
+#' @param rdata_name name of RData file should be used to save
+#' intermediate calculation results
+#' @param cluster_size number of CPU cores to be used for multiparallel
+#' computing
+#' @param conv_check_step convergence is to be computed and checked every
+#' this number of iterations
+#' @param base_seed Seed value to be used as basic value in different workers
+#' @param perm_threshold Maximum number of non-valuable permutations
 #'
 #' @return Shapley value of training points
 #' @export
@@ -234,7 +242,7 @@ dataShapleyI5.MT <- function(
   D, A, V, T, tol = 0.01, conv_tol = tol * 5, log.file = "",
   log.append = FALSE, rdata_name = "tmpShapleyML", cluster_size = 4,
   conv_check_step = 100, base_seed = as.numeric(Sys.time()),
-  .continue = TRUE, .packages = c()
+  .continue = TRUE, .packages = c(), perm_threshold = 5
 ) {
   library(foreach)
   library(doParallel)
@@ -250,7 +258,6 @@ dataShapleyI5.MT <- function(
   m2 <- list()
   permL <- list()
   model <- A(D)
-  cat("default model calc\n")
   tolMS <- tolMeanScore(model, V, T)
   vTot <- tolMS$mean # V(D,model,T)
   v <- rep(0.0, N)
@@ -266,13 +273,28 @@ dataShapleyI5.MT <- function(
     if (.continue) {
       prev_files_list <- list.files(rdata.directory)
       if (length(prev_files_list) > 1) {
-        file_numbers <- as.integer(stringi::stri_replace_all_fixed(prev_files_list, paste0("_", basename(rdata_name), ".RData"), ""))
+        file_numbers <- as.integer(
+          stringi::stri_replace_all_fixed(
+            prev_files_list,
+            paste0("_", basename(rdata_name), ".RData"), ""
+          )
+        )
         if (max(file_numbers) / conv_check_step == length(file_numbers)) {
-          last_rdata <- paste0(max(file_numbers), "_", basename(rdata_name), ".RData")
+          last_rdata <- paste0(
+            max(file_numbers),
+            "_",
+            basename(rdata_name),
+            ".RData"
+          )
           load(file.path(rdata.directory, last_rdata))
           t <- ind_to_save
         } else {
-          last_rdata <- paste0(max(file_numbers) - conv_check_step, "_", basename(rdata_name), ".RData")
+          last_rdata <- paste0(
+            max(file_numbers) - conv_check_step,
+            "_",
+            basename(rdata_name),
+            ".RData"
+          )
           load(file.path(rdata.directory, last_rdata))
           t <- ind_to_save - conv_check_step
         }
@@ -282,44 +304,75 @@ dataShapleyI5.MT <- function(
   while (!convCriteria(phi, conv_tol)) {
     t <- t + conv_check_step
     if (t <= 101 + conv_check_step) {
-      cat(format(Sys.time(), "%b %d %X"), "t=", t, "\n", file = log.file, append = log.append)
+      cat(
+        format(Sys.time(), "%b %d %X"),
+        "t=", t, "\n",
+        file = log.file, append = log.append
+      )
     } else if ((t - conv_check_step - 1) %% 100 == 0) {
       ind_to_save <- t - conv_check_step
-      rdata.file.name <- file.path(rdata.directory, paste0(ind_to_save, "_", basename(rdata_name), ".RData"))
+      rdata_file_name <- file.path(
+        rdata.directory,
+        paste0(ind_to_save, "_", basename(rdata_name), ".RData")
+      )
       sd <- m2[[conv_check_step]] / (conv_check_step - 1)
       e <- sapply(Z, function(.x) sqrt((.x^2 * sd) / conv_check_step))
-      tolV <- sum(abs(phi[[conv_check_step]] - phi[[conv_check_step - 100]]) / (1e-5 + abs(phi[[conv_check_step]])))
-      cat(format(Sys.time(), "%b %d %X"), "ind_to_save =", ind_to_save, "tol=", tolV, "\n", file = log.file, append = log.append)
-      save(phi, ind_to_save, N, vTot, v, val, permL, sd, perfTolerance, vNull, tolMS, m2, e, file = rdata.file.name)
-      cat(format(Sys.time(), "%b %d %X"), "ind_to_save =", ind_to_save, "Save is completed", "\n", file = log.file, append = log.append)
+      tol_v <- sum(
+        abs(
+          phi[[conv_check_step]] - phi[[conv_check_step - 100]]
+        ) / (
+          1e-5 + abs(phi[[conv_check_step]])
+        )
+      )
+      cat(
+        format(Sys.time(), "%b %d %X"),
+        "ind_to_save =",
+        ind_to_save, "tol=", tol_v, "\n",
+        file = log.file, append = log.append
+      )
+      save(
+        phi, ind_to_save, N, vTot, v, val, permL,
+        sd, perfTolerance, vNull, tolMS, m2, e, file = rdata_file_name
+      )
+      cat(
+        format(Sys.time(), "%b %d %X"),
+        "ind_to_save =", ind_to_save, "Save is completed",
+        "\n", file = log.file, append = log.append
+      )
     }
     perm_lists <- lapply(1:conv_check_step, function(x) makePerm(N))
-    resV <- foreach(i = 1:conv_check_step, .combine = combResults, .init = list(val = val, permL = permL), .packages = .packages) %dopar% {
+    res_v <- foreach(
+      i = 1:conv_check_step, .combine = combResults,
+      .init = list(val = val, permL = permL), .packages = .packages
+    ) %dopar% {
       set.seed(base_seed + i + t - conv_check_step)
       perm <- perm_lists[[i]]
-      newRes <- vNull
-      belowIdx <- 0
+      new_res <- vNull
+      below_idx <- 0
       v <- rep(0.0, N)
 
       for (j in (1:N)) {
-        oldRes <- newRes
+        old_res <- new_res
         model <- A(D[perm[1:j], ])
         if (is.null(model)) {
-          newRes <- vNull
+          new_res <- vNull
         } else {
-          newRes <- V(model, T)
+          new_res <- V(model, T)
         }
-        if (abs(vTot - newRes) < perfTolerance) {
-          belowIdx <- belowIdx + 1
+        if (abs(vTot - new_res) < perfTolerance) {
+          below_idx <- below_idx + 1
         } else {
-          belowIdx <- 0
+          below_idx <- 0
         }
-        if (belowIdx > 5) {
+        if (below_idx > perm_threshold) {
           v[j:N] <- 0
-          cat(format(Sys.time(), "%b %d %X"), "Worker #", i + t - conv_check_step, "Tolerance break:", j, "\n")
+          cat(
+            format(Sys.time(), "%b %d %X"),
+            "Worker #", i + t - conv_check_step, "Tolerance break:", j, "\n"
+          )
           break()
         }
-        v[j] <- newRes - oldRes
+        v[j] <- new_res - old_res
       }
       list(i = i, perm = perm, v = v)
     }
@@ -336,24 +389,32 @@ dataShapleyI5.MT <- function(
     m2[[1]] <- rep(0.0, N)
 
     if (t - conv_check_step > 1) {
-      perm <- resV$permL[[1]]
-      v <- resV$val[[1]]
+      perm <- res_v$permL[[1]]
+      v <- res_v$val[[1]]
       val[[1]][perm] <- v
-      phi[[1]][perm] <- phi_old[[conv_check_step]][perm] + (v - phi_old[[conv_check_step]][perm]) / (t - conv_check_step)
-      m2[[1]][perm] <- m2_old[[conv_check_step]][perm] + (v - phi_old[[conv_check_step]][perm]) * (v - phi[[1]][perm])
+      phi[[1]][perm] <- phi_old[[conv_check_step]][perm] + (
+        v - phi_old[[conv_check_step]][perm]
+      ) / (t - conv_check_step)
+      m2[[1]][perm] <- m2_old[[conv_check_step]][perm] + (
+        v - phi_old[[conv_check_step]][perm]
+      ) * (v - phi[[1]][perm])
       permL[[1]] <- perm
     } else {
       permL[[1]] <- rep(0.0, N)
     }
     for (i in 2:conv_check_step) {
-      perm <- resV$permL[[i]]
-      v <- resV$val[[i]]
+      perm <- res_v$permL[[i]]
+      v <- res_v$val[[i]]
       val[[i]] <- rep(0.0, N)
       phi[[i]] <- rep(0.0, N)
       m2[[i]] <- rep(0.0, N)
       val[[i]][perm] <- v
-      phi[[i]][perm] <- phi[[i - 1]][perm] + (v - phi[[i - 1]][perm]) / (t - conv_check_step + i - 1)
-      m2[[i]][perm] <- m2[[i - 1]][perm] + (v - phi[[i - 1]][perm]) * (v - phi[[i]][perm])
+      phi[[i]][perm] <- phi[[i - 1]][perm] + (
+        v - phi[[i - 1]][perm]
+      ) / (t - conv_check_step + i - 1)
+      m2[[i]][perm] <- m2[[i - 1]][perm] + (
+        v - phi[[i - 1]][perm]
+      ) * (v - phi[[i]][perm])
       permL[[i]] <- perm
       if (convCriteria(phi,conv_tol)) {
         cat(format(Sys.time(), "%b %d %X"),
@@ -369,9 +430,19 @@ dataShapleyI5.MT <- function(
   phi_count <- length(phi)
   sd <- m2[[phi_count]] / (t - conv_check_step + phi_count - 1)
   e <- sapply(Z, function(.x) sqrt((.x^2 * sd) / (phi_count)))
-  tolV <- sum(abs(phi[[phi_count]] - phi[[phi_count - 100]]) / (1e-5 + abs(phi[[phi_count]])))
-  cat(format(Sys.time(), "%b %d %X"), "t =", t, "tol =", tolV, "\n", file = log.file, append = log.append)
-  save(phi, t, N, vTot, v, val, permL, perfTolerance, vNull, tolMS, m2, e, file = paste0(rdata_name, ".RData"))
+  tolV <- sum(
+    abs(
+      phi[[phi_count]] - phi[[phi_count - 100]]
+    ) / (1e-5 + abs(phi[[phi_count]]))
+  )
+  cat(
+    format(Sys.time(), "%b %d %X"), "t =", t, "tol =",
+    tolV, "\n", file = log.file, append = log.append
+  )
+  save(
+    phi, t, N, vTot, v, val, permL, perfTolerance, vNull, tolMS, m2, e,
+    file = paste0(rdata_name, ".RData")
+  )
   return(list(
     phi = phi,
     val = val,
