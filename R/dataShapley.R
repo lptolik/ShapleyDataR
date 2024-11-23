@@ -97,6 +97,11 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
     if (.continue) {
       prev_files_list <- list.files(rdata.directory)
       if (length(prev_files_list) > 1) {
+        cat(
+          format(Sys.time(), "%b %d %X"),
+          "Try loaded data from previous calculation",
+          "data files count =", length(prev_files_list), "\n", file = log.file, append = log.append
+        )
         file_numbers <- as.integer(
           stringi::stri_replace_all_fixed(
             prev_files_list,
@@ -225,14 +230,16 @@ dataShapleyI5<-function(D,A,V,T,tol=0.01,convTol=tol*5, log.file="", log.append=
 #' @return Shapley value of training points
 #' @export
 #'
-dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file = "",
-                             log.append = F, rdata.name = "tmpShapleyML", cluster.size = 4,
-                             conv_check_step = 100, base.seed = as.numeric(Sys.time()), .continue = TRUE,
-                             .packages = c()) {
+dataShapleyI5.MT <- function(
+  D, A, V, T, tol = 0.01, conv_tol = tol * 5, log.file = "",
+  log.append = FALSE, rdata_name = "tmpShapleyML", cluster_size = 4,
+  conv_check_step = 100, base_seed = as.numeric(Sys.time()),
+  .continue = TRUE, .packages = c()
+) {
   library(foreach)
   library(doParallel)
 
-  cl <- makeCluster(cluster.size, outfile = log.file)
+  cl <- makeCluster(cluster_size, outfile = log.file)
   registerDoParallel(cl)
   N <- dim(D)[1]
   phi <- list()
@@ -251,7 +258,7 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
   perfTolerance <- tol * vTot
   t <- 1
 
-  rdata.directory <- file.path(dirname(rdata.name), "temp_data")
+  rdata.directory <- file.path(dirname(rdata_name), "temp_data")
   cat(rdata.directory, "\n")
   if (!dir.exists(rdata.directory)) {
     dir.create(rdata.directory, recursive = TRUE)
@@ -259,26 +266,26 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
     if (.continue) {
       prev_files_list <- list.files(rdata.directory)
       if (length(prev_files_list) > 1) {
-        file_numbers <- as.integer(stringi::stri_replace_all_fixed(prev_files_list, paste0("_", basename(rdata.name), ".RData"), ""))
+        file_numbers <- as.integer(stringi::stri_replace_all_fixed(prev_files_list, paste0("_", basename(rdata_name), ".RData"), ""))
         if (max(file_numbers) / conv_check_step == length(file_numbers)) {
-          last_rdata <- paste0(max(file_numbers), "_", basename(rdata.name), ".RData")
+          last_rdata <- paste0(max(file_numbers), "_", basename(rdata_name), ".RData")
           load(file.path(rdata.directory, last_rdata))
           t <- ind_to_save
         } else {
-          last_rdata <- paste0(max(file_numbers) - conv_check_step, "_", basename(rdata.name), ".RData")
+          last_rdata <- paste0(max(file_numbers) - conv_check_step, "_", basename(rdata_name), ".RData")
           load(file.path(rdata.directory, last_rdata))
           t <- ind_to_save - conv_check_step
         }
       }
     }
   }
-  while (!convCriteria(phi, convTol)) {
+  while (!convCriteria(phi, conv_tol)) {
     t <- t + conv_check_step
     if (t <= 101 + conv_check_step) {
       cat(format(Sys.time(), "%b %d %X"), "t=", t, "\n", file = log.file, append = log.append)
     } else if ((t - conv_check_step - 1) %% 100 == 0) {
       ind_to_save <- t - conv_check_step
-      rdata.file.name <- file.path(rdata.directory, paste0(ind_to_save, "_", basename(rdata.name), ".RData"))
+      rdata.file.name <- file.path(rdata.directory, paste0(ind_to_save, "_", basename(rdata_name), ".RData"))
       sd <- m2[[conv_check_step]] / (conv_check_step - 1)
       e <- sapply(Z, function(.x) sqrt((.x^2 * sd) / conv_check_step))
       tolV <- sum(abs(phi[[conv_check_step]] - phi[[conv_check_step - 100]]) / (1e-5 + abs(phi[[conv_check_step]])))
@@ -288,7 +295,7 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
     }
     perm_lists <- lapply(1:conv_check_step, function(x) makePerm(N))
     resV <- foreach(i = 1:conv_check_step, .combine = combResults, .init = list(val = val, permL = permL), .packages = .packages) %dopar% {
-      set.seed(base.seed + i + t - conv_check_step)
+      set.seed(base_seed + i + t - conv_check_step)
       perm <- perm_lists[[i]]
       newRes <- vNull
       belowIdx <- 0
@@ -348,7 +355,7 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
       phi[[i]][perm] <- phi[[i - 1]][perm] + (v - phi[[i - 1]][perm]) / (t - conv_check_step + i - 1)
       m2[[i]][perm] <- m2[[i - 1]][perm] + (v - phi[[i - 1]][perm]) * (v - phi[[i]][perm])
       permL[[i]] <- perm
-      if (convCriteria(phi,convTol)) {
+      if (convCriteria(phi,conv_tol)) {
         cat(format(Sys.time(), "%b %d %X"),
             "Convergency criteria has been met at",
             t - conv_check_step + i,
@@ -364,7 +371,7 @@ dataShapleyI5.MT <- function(D, A, V, T, tol = 0.01, convTol = tol * 5, log.file
   e <- sapply(Z, function(.x) sqrt((.x^2 * sd) / (phi_count)))
   tolV <- sum(abs(phi[[phi_count]] - phi[[phi_count - 100]]) / (1e-5 + abs(phi[[phi_count]])))
   cat(format(Sys.time(), "%b %d %X"), "t =", t, "tol =", tolV, "\n", file = log.file, append = log.append)
-  save(phi, t, N, vTot, v, val, permL, perfTolerance, vNull, tolMS, m2, e, file = paste0(rdata.name, ".RData"))
+  save(phi, t, N, vTot, v, val, permL, perfTolerance, vNull, tolMS, m2, e, file = paste0(rdata_name, ".RData"))
   return(list(
     phi = phi,
     val = val,
